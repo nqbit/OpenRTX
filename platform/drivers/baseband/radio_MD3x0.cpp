@@ -278,7 +278,7 @@ void radio_enableTx()
     float pwrHi  = static_cast< float >(txpwr_hi);
     float pwrLo  = static_cast< float >(txpwr_lo);
     float apc    = pwrLo + (pwrHi - pwrLo)/4.0f*(power - 1.0f);
-    DAC->DHR12L1 = static_cast< uint8_t >(apc) * 0xFF;
+    DAC->DHR12L1 = static_cast< uint8_t >(apc) * 0x3F;
 
     switch(config->opMode)
     {
