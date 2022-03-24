@@ -122,10 +122,10 @@ void OpMode_M17::enable()
     pthread_attr_t codecAttr;
     pthread_attr_init(&codecAttr);
     pthread_attr_setstacksize(&codecAttr, 16384);
-    pthread_create(&codecThread, &codecAttr, threadFunc, NULL);
+//     pthread_create(&codecThread, &codecAttr, threadFunc, NULL);
 
     modulator.init();
-    demodulator.init();
+//     demodulator.init();
     enterRx = true;
 }
 
@@ -139,7 +139,7 @@ void OpMode_M17::disable()
 
     enterRx = false;
     modulator.terminate();
-    demodulator.terminate();
+//     demodulator.terminate();
 }
 
 void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
@@ -149,7 +149,7 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
     // RX logic
     if(status->opStatus == RX)
     {
-        demodulator.update();
+//         demodulator.update();
         sleepFor(0u, 30u);
     }
     else if((status->opStatus == OFF) && enterRx)
@@ -158,7 +158,7 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
 
         radio_enableRx();
         status->opStatus = RX;
-        demodulator.startBasebandSampling();
+//         demodulator.startBasebandSampling();
         enterRx = false;
     }
 
@@ -168,12 +168,14 @@ void OpMode_M17::update(rtxStatus_t *const status, const bool newCfg)
         // Enter Tx mode, setup transmission
         if(status->opStatus != TX)
         {
-            demodulator.stopBasebandSampling();
+//             demodulator.stopBasebandSampling();
             audio_disableAmp();
             radio_disableRtx();
 
             audio_enableMic();
             radio_enableTx();
+
+            srand(getTick());
 
             std::string source_address(status->source_address);
             std::string destination_address(status->destination_address);
@@ -224,15 +226,20 @@ void OpMode_M17::sendData(bool lastFrame)
 {
     payload_t dataFrame;
 
-    // Wait until there are 16 bytes of compressed speech, then send them
-    pthread_mutex_lock(&codecMtx);
-    while(newData == false)
+    for(auto& byte : dataFrame)
     {
-        pthread_cond_wait(&codecCv, &codecMtx);
+        byte = rand();
     }
-    newData = false;
-    pthread_mutex_unlock(&codecMtx);
 
-    std::copy(encodedData.begin(), encodedData.end(), dataFrame.begin());
+    // Wait until there are 16 bytes of compressed speech, then send them
+//     pthread_mutex_lock(&codecMtx);
+//     while(newData == false)
+//     {
+//         pthread_cond_wait(&codecCv, &codecMtx);
+//     }
+//     newData = false;
+//     pthread_mutex_unlock(&codecMtx);
+//
+//     std::copy(encodedData.begin(), encodedData.end(), dataFrame.begin());
     m17Tx.send(dataFrame, lastFrame);
 }
