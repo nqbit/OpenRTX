@@ -594,9 +594,15 @@ endforeach
 unit_test_opts = {'c_args': linux_c_args,
                   'cpp_args' : linux_cpp_args,
                   'include_directories': linux_inc,
-                  'dependencies': linux_dep,
+                  'dependencies': [linux_dep, littlefs_dep],
                   'link_args' : linux_l_args}
 unit_test_src = openrtx_src + minmea_src + linux_platform_src
 
-dummy_test = executable('dummy', 'tests/unit/dummy.c')
-test('Dummy Unit Test', dummy_test)
+#dummy_test = executable('dummy', 'tests/unit/dummy.c')
+#test('Dummy Unit Test', dummy_test)
+
+lfs_test = executable('lfs_test',
+                      sources: unit_test_src + ['tests/unit/lfs.c'],
+                      kwargs: unit_test_opts)
+
+test('LittleFS Unit Test', lfs_test)
