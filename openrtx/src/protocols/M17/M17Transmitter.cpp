@@ -87,7 +87,8 @@ void M17Transmitter::start(const std::string& src, const std::string& dst)
     modulator.send(preamble_sync, preamble_bytes);
 
     // Send LSF
-    modulator.send(LSF_SYNC_WORD, punctured);
+//     modulator.send(LSF_SYNC_WORD, punctured);
+    modulator.send(preamble_sync, preamble_bytes);
 }
 
 void M17Transmitter::send(const payload_t& payload, const bool isLast)
@@ -120,5 +121,11 @@ void M17Transmitter::send(const payload_t& payload, const bool isLast)
     interleave(frame);
     decorrelate(frame);
 
-    modulator.send(STREAM_SYNC_WORD, frame, isLast);
+//     modulator.send(STREAM_SYNC_WORD, frame, isLast);
+
+    std::array<uint8_t, 2>  preamble_sync;
+    std::array<uint8_t, 46> preamble_bytes;
+    preamble_sync.fill(0x77);
+    preamble_bytes.fill(0x77);
+    modulator.send(preamble_sync, preamble_bytes, isLast);
 }
