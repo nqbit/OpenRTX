@@ -68,6 +68,10 @@ void _ui_drawMainTop()
         gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
                   color_white, "M17");
         break;
+        case FOX:
+        gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                  color_white, "FOX");
+        break;
     }
 }
 
@@ -181,6 +185,13 @@ void _ui_drawMainBottom()
                                 mic_level);
             break;
         case M17:
+            gfx_drawSmeterLevel(meter_pos,
+                                meter_width,
+                                meter_height,
+                                rssi,
+                                mic_level);
+            break;
+        case FOX:
             gfx_drawSmeterLevel(meter_pos,
                                 meter_width,
                                 meter_height,

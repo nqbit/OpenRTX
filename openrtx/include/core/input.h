@@ -20,6 +20,10 @@
 #ifndef INPUT_H
 #define INPUT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <inttypes.h>
 #include <stdbool.h>
 
@@ -38,5 +42,9 @@ bool input_isNumberPressed(kbd_msg_t msg);
  * @return the smalled pressed number on the keyboard
  */
 uint8_t input_getPressedNumber(kbd_msg_t msg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* INPUT_H */

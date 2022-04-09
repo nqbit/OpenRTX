@@ -51,6 +51,7 @@ void state_init()
     {
         state.settings = default_settings;
         strncpy(state.settings.callsign, "OPNRTX", 10);
+        memset(state.settings.fox_string, 0, sizeof(state.settings.fox_string));
     }
 
     /*

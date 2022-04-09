@@ -129,6 +129,12 @@ void radio_setOpmode(const enum opmode mode)
             C6000.setInputGain(+3);                 // Input gain in dB, found experimentally
             break;
 
+        case FOX:
+            at1846s.setOpMode(AT1846S_OpMode::DMR); // AT1846S in DMR mode, disables RX filter
+            C6000.fmMode();                         // HR_C6000 in FM mode
+            C6000.setInputGain(+3);                 // Input gain in dB, found experimentally
+            break;
+
         default:
             break;
     }
@@ -200,6 +206,10 @@ void radio_enableTx()
             break;
 
         case M17:
+            C6000.startAnalogTx(TxAudioSource::LINE_IN, FmConfig::BW_25kHz);
+            break;
+
+        case FOX:
             C6000.startAnalogTx(TxAudioSource::LINE_IN, FmConfig::BW_25kHz);
             break;
 

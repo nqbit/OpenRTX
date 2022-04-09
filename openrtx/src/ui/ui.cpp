@@ -65,6 +65,7 @@
 #include <stdint.h>
 #include <ui.h>
 #include <rtx.h>
+#include <input/t9.h>
 #include <interfaces/platform.h>
 #include <interfaces/nvmem.h>
 #ifdef HAS_GPS
@@ -76,6 +77,10 @@
 #include <input.h>
 #include <hwconfig.h>
 
+T9 t9_proc;
+
+extern "C" {
+
 /* UI main screen functions, their implementation is in "ui_main.c" */
 extern void _ui_drawMainBackground();
 extern void _ui_drawMainTop();
@@ -86,8 +91,8 @@ extern void _ui_drawMEMBottom();
 extern void _ui_drawMainVFO();
 extern void _ui_drawMainVFOInput(ui_state_t* ui_state);
 extern void _ui_drawMainMEM();
-extern void _ui_drawModeVFO();
-extern void _ui_drawModeMEM();
+extern void _ui_drawModeVFO(ui_state_t* ui_state);
+extern void _ui_drawModeMEM(ui_state_t* ui_state);
 /* UI menu functions, their implementation is in "ui_menu.c" */
 extern void _ui_drawMenuTop(ui_state_t* ui_state);
 extern void _ui_drawMenuZone(ui_state_t* ui_state);
@@ -108,9 +113,12 @@ extern void _ui_drawSettingsTimeDate();
 extern void _ui_drawSettingsTimeDateSet(ui_state_t* ui_state);
 #endif
 extern void _ui_drawSettingsDisplay(ui_state_t* ui_state);
+extern void _ui_drawSettingsFox(ui_state_t* ui_state);
 extern void _ui_drawSettingsM17(ui_state_t* ui_state);
 extern void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state);
-extern bool _ui_drawMacroMenu();
+extern bool _ui_drawMacroMenu(state_t* ui_state);
+    
+}
 
 const char *menu_items[] =
 {
@@ -129,6 +137,7 @@ const char *menu_items[] =
 const char *settings_items[] =
 {
     "Display",
+    "Fox",
 #ifdef HAS_RTC
     "Time & Date",
 #endif
@@ -137,6 +146,13 @@ const char *settings_items[] =
 #endif
     "M17",
     "Default Settings"
+};
+
+const char *fox_items[] =
+{
+    "Enabled",
+    "Tone",
+    "Text"
 };
 
 const char *display_items[] =
@@ -220,6 +236,7 @@ const char *symbols_ITU_T_E161_callsign[] =
 const uint8_t menu_num = sizeof(menu_items)/sizeof(menu_items[0]);
 const uint8_t settings_num = sizeof(settings_items)/sizeof(settings_items[0]);
 const uint8_t display_num = sizeof(display_items)/sizeof(display_items[0]);
+const uint8_t fox_num = sizeof(fox_items)/sizeof(fox_items[0]);
 #ifdef HAS_GPS
 const uint8_t settings_gps_num = sizeof(settings_gps_items)/sizeof(settings_gps_items[0]);
 #endif
@@ -241,6 +258,48 @@ bool redraw_needed = true;
 
 bool standby = false;
 long long last_event_tick = 0;
+
+void _updateT9(const kbd_msg_t& msg) {
+    T9::KeyCode key_code = T9::KeyCode::kNoKey;
+
+    if (msg.keys & KEY_0) {
+        key_code = T9::KeyCode::k0;
+    } else if (msg.keys & KEY_1) {
+        key_code = T9::KeyCode::k1;        
+    } else if (msg.keys & KEY_2) {
+        key_code = T9::KeyCode::k2;        
+    } else if (msg.keys & KEY_3) {
+        key_code = T9::KeyCode::k3;        
+    } else if (msg.keys & KEY_4) {
+        key_code = T9::KeyCode::k4;
+    } else if (msg.keys & KEY_5) {
+        key_code = T9::KeyCode::k5;        
+    } else if (msg.keys & KEY_6) {
+        key_code = T9::KeyCode::k6;
+    } else if (msg.keys & KEY_7) {
+        key_code = T9::KeyCode::k7;        
+    } else if (msg.keys & KEY_8) {
+        key_code = T9::KeyCode::k8;
+    } else if (msg.keys & KEY_9) {
+        key_code = T9::KeyCode::k9;
+    } else if (msg.keys & KEY_HASH) {
+        if (state.settings.fox_string_pos != 0) {
+            state.settings.fox_string[state.settings.fox_string_pos] = '\x00';
+            state.settings.fox_string_pos--;
+        }
+    }
+
+    T9::State letter = t9_proc.poll(getTick(), key_code);
+
+    if (!letter.has_letter) {
+        return;
+    }
+
+    if (letter.newletter) {
+        state.settings.fox_string_pos++;
+    }
+    state.settings.fox_string[state.settings.fox_string_pos] = letter.letter;
+}
 
 layout_t _ui_calculateLayout()
 {
@@ -423,7 +482,7 @@ void ui_drawSplashScreen(bool centered)
         splash_origin.y = SCREEN_HEIGHT / 2 - 6;
     else
         splash_origin.y = SCREEN_HEIGHT / 5;
-    gfx_print(splash_origin, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413, "O P N\nR T X");
+        gfx_print(splash_origin, FONT_SIZE_12PT, TEXT_ALIGN_CENTER, yellow_fab413, "O P N\nR T X");
     #endif
 }
 
@@ -784,6 +843,8 @@ void _ui_fsm_menuMacro(kbd_msg_t msg, bool *sync_rtx)
             else if(state.channel.mode == DMR)
                 state.channel.mode = M17;
             else if(state.channel.mode == M17)
+                state.channel.mode = FOX;
+            else if(state.channel.mode == FOX)
                 state.channel.mode = FM;
             *sync_rtx = true;
             break;
@@ -1389,6 +1450,9 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                         case S_DISPLAY:
                             state.ui_screen = SETTINGS_DISPLAY;
                             break;
+                        case S_FOX:
+                            state.ui_screen = SETTINGS_FOX;
+                            break;
 #ifdef HAS_RTC
                         case S_TIMEDATE:
                             state.ui_screen = SETTINGS_TIMEDATE;
@@ -1546,6 +1610,25 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
                 else if(msg.keys & KEY_ESC)
                     _ui_menuBack(MENU_SETTINGS);
                 break;
+            case SETTINGS_FOX:
+                if(msg.keys & KEY_ENTER) {
+                    ui_state.edit_mode = !ui_state.edit_mode;
+                } else if(ui_state.edit_mode) {
+                    switch(ui_state.menu_selected) {
+                        case F_TEXT:
+                            _updateT9(msg);
+                            break;
+                        default:
+                            state.ui_screen = SETTINGS_FOX;
+                    }
+                } else if(msg.keys & KEY_UP || msg.keys & KNOB_LEFT) {
+                    _ui_menuUp(fox_num);
+                } else if(msg.keys & KEY_DOWN || msg.keys & KNOB_RIGHT) {
+                    _ui_menuDown(fox_num);
+                } else if(msg.keys & KEY_ESC) {
+                    _ui_menuBack(MENU_SETTINGS);
+                }
+                break;
 #ifdef HAS_GPS
             case SETTINGS_GPS:
                 if(msg.keys & KEY_LEFT || msg.keys & KEY_RIGHT ||
@@ -1670,7 +1753,7 @@ void ui_updateFSM(event_t event, bool *sync_rtx)
     }
 }
 
-void ui_updateGUI()
+extern "C" void ui_updateGUI()
 {
     if(!layout_ready)
     {
@@ -1759,6 +1842,9 @@ void ui_updateGUI()
         // Display settings screen
         case SETTINGS_DISPLAY:
             _ui_drawSettingsDisplay(&ui_state);
+            break;
+        case SETTINGS_FOX:
+            _ui_drawSettingsFox(&ui_state);
             break;
 #ifdef HAS_GPS
         // GPS settings screen

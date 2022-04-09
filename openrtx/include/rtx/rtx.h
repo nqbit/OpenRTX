@@ -78,7 +78,8 @@ enum opmode
     NONE = 0,        /**< No opMode selected */
     FM   = 1,        /**< Analog FM          */
     DMR  = 2,        /**< DMR                */
-    M17  = 3         /**< M17                */
+    M17  = 3,        /**< M17                */
+    FOX  = 4         /**< FOX                */
 };
 
 /**

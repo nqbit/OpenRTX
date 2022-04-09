@@ -145,6 +145,31 @@ int _ui_getDisplayEntryName(char *buf, uint8_t max_len, uint8_t index)
     return 0;
 }
 
+int _ui_getFoxEntryName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= fox_num) return -1;
+    snprintf(buf, max_len, "%s", fox_items[index]);
+    return 0;
+}
+
+int _ui_getFoxValueName(char *buf, uint8_t max_len, uint8_t index)
+{
+    if(index >= fox_num) return -1;
+    switch(index)
+    {
+        case F_ENABLED:
+            snprintf(buf, max_len, "false");
+            break;
+        case F_TONE:
+            snprintf(buf, max_len, "123.23");
+            return 0;
+        case F_TEXT:
+            snprintf(buf, max_len, last_state.settings.fox_string);
+            return 0;
+    }
+    return 0;
+}
+
 int _ui_getDisplayValueName(char *buf, uint8_t max_len, uint8_t index)
 {
     if(index >= display_num) return -1;
@@ -549,6 +574,17 @@ void _ui_drawSettingsDisplay(ui_state_t* ui_state)
                            _ui_getDisplayValueName);
 }
 
+void _ui_drawSettingsFox(ui_state_t* ui_state)
+{
+    gfx_clearScreen();
+    // Print "Fox" on top bar
+    gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
+              color_white, "Fox");
+    // Print display settings entries
+    _ui_drawMenuListValue(ui_state, ui_state->menu_selected, _ui_getFoxEntryName,
+                           _ui_getFoxValueName);
+}
+
 #ifdef HAS_GPS
 void _ui_drawSettingsGPS(ui_state_t* ui_state)
 {
@@ -671,7 +707,7 @@ void _ui_drawSettingsReset2Defaults(ui_state_t* ui_state)
     drawcnt++;
 }
 
-bool _ui_drawMacroMenu()
+bool _ui_drawMacroMenu(ui_state_t* ui_state)
 {
         // Header
         gfx_print(layout.top_pos, layout.top_font, TEXT_ALIGN_CENTER,
@@ -686,6 +722,11 @@ bool _ui_drawMacroMenu()
                       ctcss_tone[last_state.channel.fm.txTone]/10.0f);
         }
         else if (last_state.channel.mode == M17)
+        {
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
+                      color_white, "          ");
+        }
+        else if (last_state.channel.mode == FOX)
         {
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_LEFT,
                       color_white, "          ");
@@ -709,6 +750,12 @@ bool _ui_drawMacroMenu()
                       color_white, encdec_str);
         }
         else if (last_state.channel.mode == M17)
+        {
+            char encdec_str[9] = "        ";
+            gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
+                      color_white, encdec_str);
+        }
+        else if (last_state.channel.mode == FOX)
         {
             char encdec_str[9] = "        ";
             gfx_print(layout.line1_pos, layout.top_font, TEXT_ALIGN_CENTER,
@@ -748,6 +795,12 @@ bool _ui_drawMacroMenu()
                       color_white, "       ");
 
         }
+        else if (last_state.channel.mode == FOX)
+        {
+            gfx_print(pos_2, layout.top_font, TEXT_ALIGN_LEFT,
+                      color_white, "       ");
+
+        }
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,
                   yellow_fab413, "5       ");
         char mode_str[9] = "";
@@ -761,6 +814,9 @@ bool _ui_drawMacroMenu()
             break;
             case M17:
             snprintf(mode_str, 9,"     M17");
+            break;
+            case FOX:
+            snprintf(mode_str, 9,"     FOX");
             break;
         }
         gfx_print(pos_2, layout.top_font, TEXT_ALIGN_CENTER,

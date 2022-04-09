@@ -21,6 +21,10 @@
 #ifndef NVMEM_H
 #define NVMEM_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "platform.h"
 #include <stdint.h>
 #include <cps.h>
@@ -114,5 +118,9 @@ int nvm_writeSettings(const settings_t *settings);
  * @return 0 on success, -1 on failure
  */
 int nvm_writeSettingsAndVfo(const settings_t *settings, const channel_t *vfo);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* NVMEM_H */

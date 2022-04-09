@@ -20,6 +20,10 @@
 #ifndef UI_H
 #define UI_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 #include <state.h>
 #include <interfaces/graphics.h>
@@ -56,6 +60,7 @@ enum uiScreen
     SETTINGS_TIMEDATE,
     SETTINGS_TIMEDATE_SET,
     SETTINGS_DISPLAY,
+    SETTINGS_FOX,
     SETTINGS_GPS,
     SETTINGS_M17,
     SETTINGS_RESET2DEFAULTS,
@@ -87,6 +92,7 @@ enum menuItems
 enum settingsItems
 {
     S_DISPLAY = 0
+    ,S_FOX
 #ifdef HAS_RTC
     ,S_TIMEDATE
 #endif
@@ -110,6 +116,13 @@ enum displayItems
     ,D_CONTRAST
 #endif
     ,D_TIMER
+};
+
+enum foxItems
+{
+    F_ENABLED = 0,
+    F_TONE,
+    F_TEXT
 };
 
 #ifdef HAS_GPS
@@ -194,6 +207,7 @@ extern state_t last_state;
 extern const char *menu_items[];
 extern const char *settings_items[];
 extern const char *display_items[];
+extern const char *fox_items[];
 extern const char *settings_gps_items[];
 extern const char *backup_restore_items[];
 extern const char *info_items[];
@@ -201,6 +215,7 @@ extern const char *authors[];
 extern const uint8_t menu_num;
 extern const uint8_t settings_num;
 extern const uint8_t display_num;
+extern const uint8_t fox_num;
 extern const uint8_t settings_gps_num;
 extern const uint8_t backup_restore_num;
 extern const uint8_t info_num;
@@ -248,5 +263,9 @@ void ui_updateGUI();
  * This function terminates the User Interface.
  */
 void ui_terminate();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* UI_H */

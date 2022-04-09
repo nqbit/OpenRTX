@@ -116,6 +116,11 @@ void _ui_drawModeDetails(ui_state_t* ui_state)
                           TEXT_ALIGN_LEFT, color_white, "Dst ID: %s", cfg.destination_address);
         }
         break;
+        case FOX:
+            gfx_printLine(2, 3, layout.top_h, SCREEN_HEIGHT - layout.bottom_h, 
+                        layout.horizontal_pad, layout.mode_font_small, 
+                        TEXT_ALIGN_LEFT, color_white, state.settings.fox_string);
+        break;
     }
 }
 
